@@ -30,10 +30,11 @@ def get_files(folder, format=''):
 
 import_path = r'D:\DataSet\homburg_audio\audios'
 export_path = r'D:\DataSet\homburg_audio\waves'
+ffmpeg_path = r'D:\Develop\Python\ffmpeg\bin'
 
 # demos = [r'.\SampleAudio_0.4mb', r'.\SampleAudio_0.7mb']
 # Point the converter's location
-AudioSegment.converter = r'D:\Develop\Python\ffmpeg\bin\ffmpeg.exe'
+AudioSegment.converter = join(ffmpeg_path, r'\ffmpeg.exe')
 
 for folder in get_folders(import_path):
     for file in get_files(join(import_path, folder)):

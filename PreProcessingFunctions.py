@@ -1,5 +1,6 @@
 '''
     Created by Tao
+    Edited by Ding
 
     Reference:
         http://haythamfayek.com/2016/04/21/speech-processing-for-machine-learning.html
@@ -8,14 +9,7 @@
         frames_ham and frames_kai is the final value after three steps,type is <class 'np.ndarray'>
 '''
 
-import wave as wave
-import matplotlib.pyplot as plt
 import numpy as np
-import pdb
-import scipy.io.wavfile
-
-from os.path import join
-from PublicFunctions import get_files
 from scipy.fftpack import dct
 
 
@@ -78,7 +72,7 @@ def window(frames, frame_length, method='hamming'):
         return np.hamming(frame_length) * frames
 
 
-def fft_filterbank(frames_ham, n=512, nfilt=40, normalize=False):
+def fft_filterbank(frames_ham, sample_rate, n=512, nfilt=40, normalize=False):
     '''
     # step4 FFT and power spectrum
     # step5 filter banks
@@ -142,29 +136,7 @@ def mfccs(f_bank, num_ceps=12, cep_lifter=22, normalize=False):
     return mfcc
 
 
-path = r'D:\DataSet\homburg_audio\waves'
-audios = get_files(path)
 
-# set up
-for audio in audios:
-    sample_rate, signal = scipy.io.wavfile.read(join(path, audio))  # read file
-    # Keep all time range :10 seconds
-    # signal = signal[0:int(10 * sample_rate)]
 
-    signal = pre_emphasis(signal)
 
-    frame, f_len = framing(signal, sample_rate)
-
-    win = window(frame, f_len)
-
-    f_bank = fft_filterbank(win)
-
-    coef = mfccs(f_bank)
-
-    pdb.set_trace()
-    # Need save the coefs for each audio.
-
-    # Test stop
-    # if audio:
-        # break
 

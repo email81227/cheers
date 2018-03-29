@@ -199,6 +199,6 @@ try:
     prediction = model.predict(X)
     classes = prediction.argmax(axis=-1)
     test['Class'] = list(lb.inverse_transform(classes))
-    test.to_csv(join(sub_path, 'sub_CNN2.csv'), index=False)
+    test.to_csv(join(sub_path, 'sub_CNN3.csv'), index=False)
 except:
     pdb.set_trace()

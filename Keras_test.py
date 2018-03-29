@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from keras.layers import Dense, Dropout, Activation, Flatten
-from keras.layers import Convolution2D, MaxPooling2D
+from keras.layers import Conv1D, MaxPool1D
 from keras.models import Sequential
 from keras.optimizers import Adam
 from keras.utils import np_utils
@@ -32,6 +32,9 @@ from sklearn import metrics
 '''
     Reference:
         https://www.analyticsvidhya.com/blog/2017/08/audio-voice-processing-deep-learning/
+        
+    Improved reference:
+        https://blog.manash.me/building-a-dead-simple-word-recognition-engine-using-convnet-in-keras-25e72c19c12b
 '''
 import glob
 import IPython.display as ipd
@@ -46,6 +49,12 @@ import random
 from matplotlib import pyplot as plt
 from os.path import join
 from sklearn.preprocessing import LabelEncoder
+
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+config.gpu_options.per_process_gpu_memory_fraction = 0.7
+set_session(tf.Session(config=config))
 
 
 doc_path = r'D:\DataSet\UrbanSoundChallenge\train'
@@ -82,9 +91,13 @@ test = pd.read_csv(join(r'D:\DataSet\UrbanSoundChallenge\test', 'test.csv'))
 # test.to_csv(join(sub_path, 'sub01.csv'), index=False)
 
 
+# Step 1 and  2 combined: Load audio files and extract features
 def parser(row):
     # function to load files and extract features
-    file_name = os.path.join(join(data_path, str(row.ID) + '.wav'))
+    if hasattr(row, 'Class'):
+        file_name = os.path.join(join(data_path, str(row.ID) + '.wav'))
+    else:
+        file_name = os.path.join(join(test_path, str(row.ID) + '.wav'))
 
     # handle exception to check if there isn't a file which is corrupted
     try:
@@ -97,16 +110,16 @@ def parser(row):
         return None, None
 
     feature = mfccs
-    label = row.Class
-
-    return [feature, label]
-
-# Step 1 and  2 combined: Load audio files and extract features
+    if hasattr(row, 'Class'):
+        label = row.Class
+        return [feature, label]
+    else:
+        return [feature]
 
 
 # Random pick
-# i = random.sample(list(train.index), 300)
-# sub_train = train.loc[i]
+# i = random.sample(list(train.index), 100)
+# sub_train = train.loc[i]()
 temp = train.apply(parser, axis=1)
 temp.columns = ['feature', 'label']
 
@@ -121,29 +134,71 @@ y = np_utils.to_categorical(lb.fit_transform(y))
 
 # Step 4: Run a deep learning model and get results
 num_labels = y.shape[1]
-filter_size = 3
-
-# build model
-# The Sequential model is a linear stack of layers.
-model = Sequential()
 
 # The model needs to know what input shape it should expect.
 # For this reason, the first layer in a Sequential model (and only the first,
 # because following layers can do automatic shape inference) needs to receive
 # information about its input shape.
-model.add(Dense(32, input_shape=(40,)))  # first layer
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
+# From first ref:
+#   build model
+#   The Sequential model is a linear stack of layers.
+# model = Sequential()
+# #
+# model.add(Dense(16, input_shape=(40,)))  # first layer
+# model.add(Activation('relu'))
+# model.add(Dropout(0.5))
+#
+# model.add(Dense(16))
+# model.add(Activation('relu'))
+# model.add(Dropout(0.5))
+#
+# model.add(Dense(num_labels))
+# model.add(Activation('softmax'))
+#
+# model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+#
+# # Epochs: One epoch consists of one full training cycle on the training set.
+# # Once every sample in the set is seen, you start again - marking the beginning
+# # of the 2nd epoch.
+# model.fit(X, y, batch_size=8, epochs=12, validation_data=(X, y))
+#
 
-model.add(Dense(32))
-model.add(Activation('relu'))
-model.add(Dropout(0.5))
+X = X.reshape(X.shape[0], X.shape[1], 1)
+# y = y.reshape(y.shape[0], y.shape[1], 1)
 
-model.add(Dense(num_labels))
-model.add(Activation('softmax'))
+# From second ref (CNN):
+try:
+    model = Sequential()
+    model.add(Conv1D(128, kernel_size=2, activation='relu', input_shape=(40, 1), name='C1'))
+    model.add(MaxPool1D(pool_size=2))
+    model.add(Dropout(0.25))
 
-model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer='adam')
+    model.add(Conv1D(32, kernel_size=2, activation='relu', name='C2'))
+    model.add(MaxPool1D(pool_size=2))
+    model.add(Dropout(0.25))
 
-model.fit(X, y, batch_size=8, epochs=12, validation_data=(X, y))
+    model.add(Flatten(name='F1'))
+    model.add(Dense(8, activation='relu', name='FD1'))
+    model.add(Dropout(0.25))
 
-pdb.set_trace()
+    model.add(Dense(10, activation='softmax', name='FD2'))
+    model.compile(loss='mse', optimizer='adam')
+    # No progress bar displayed: verbose=0
+    model.fit(X, y, batch_size=10, epochs=20, validation_split=0.1, verbose=0)
+except:
+    pdb.set_trace()
+
+
+# Predictive
+temp = test.apply(parser, axis=1)
+temp.columns = ['feature']
+
+X = np.array(temp.feature.tolist())
+X = X.reshape(X.shape[0], X.shape[1], 1)
+try:
+    prediction = model.predict(X)
+    classes = prediction.argmax(axis=-1)
+    test['Class'] = list(lb.inverse_transform(classes))
+    test.to_csv(join(sub_path, 'sub_CNN2.csv'), index=False)
+except:
+    pdb.set_trace()

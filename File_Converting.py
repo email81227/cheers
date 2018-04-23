@@ -17,7 +17,7 @@ ffmpeg_path = r'D:\Develop\Python\ffmpeg\bin'
 
 # demos = [r'.\SampleAudio_0.4mb', r'.\SampleAudio_0.7mb']
 # Point the converter's location
-AudioSegment.converter = join(ffmpeg_path, r'\ffmpeg.exe')
+AudioSegment.converter = join(ffmpeg_path, 'ffmpeg.exe')
 
 for folder in get_folders(import_path):
     for file in get_files(join(import_path, folder)):

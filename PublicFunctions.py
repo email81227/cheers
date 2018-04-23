@@ -1,4 +1,7 @@
 from os.path import join
+from pydub import AudioSegment
+
+import numpy as np
 
 
 class XmlListConfig(list):
@@ -70,6 +73,7 @@ def get_folders(direct):
 
     return [folder for folder in listdir(direct) if isdir(join(direct, folder))]
 
+
 def get_files(folder, format=''):
     from os import listdir
     from os.path import isfile, join
@@ -78,6 +82,36 @@ def get_files(folder, format=''):
     if format == '':
         return [file for file in listdir(folder) if isfile(join(folder, file))]
     else:
-        return [file for file in listdir(folder)
-                if isfile(join(folder, file)) & re.match(format, file)]
+        extension = re.compile(format)
+        return [file for file in listdir(folder) if isfile(join(folder, file)) and extension.search(file)]
 
+
+def mp3towav(fmp3, fwav, ffmpeg_path=r'D:\Develop\Python\ffmpeg\bin'):
+    # Assign converter
+    AudioSegment.converter = join(ffmpeg_path, 'ffmpeg.exe')
+
+    # Import mp3 audio and then convert to export
+    sound = AudioSegment.from_mp3(fmp3)
+    sound.export(fwav, format="wav")
+
+
+def loader(path, name, dtype='float'):
+    with open(join(path, name), 'r') as f:
+        data_array = np.loadtxt(f, dtype=dtype)
+
+    return data_array
+
+
+def loader_hd(path, name):
+    data_array = np.load(join(path, name))
+
+    return data_array
+
+
+def saver(data_array, path, name, fmt='%.18e'):
+    with open(join(path, name), 'wb') as f:
+        np.savetxt(f, data_array, fmt)
+
+
+def saver_hd(data_array, path, name):
+    np.save(join(path, name), data_array)

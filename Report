@@ -1,0 +1,16 @@
+The report should be 7 pages.
+Submission 11th May.
+IEEE conference format.
+Topics and subtopics  
+  Abstract
+  Introduction
+  Objective
+  Dataset
+  Method-Pre Processing,Application of Machine learning methods
+  Pre processing-(Signal processing,conversion to wav files from mp3, conersion to numerical data from wav files)
+  Application of Machine Learning methods(XGBOOST,Neural network,SVM,Deep Learning)
+  Results and Accuracy
+  Comparison and Inference
+  Conclusion
+  Limitation and future work
+  References
